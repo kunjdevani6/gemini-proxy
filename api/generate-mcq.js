@@ -56,6 +56,7 @@ function buildPrompt(subject, level, count) {
     'Each item must use this exact shape:',
     '{"question":"...","options":["A","B","C","D"],"correct_answer":"exact text of one option","explanation":"short reason"}',
     'Rules:',
+    '- Keep each explanation under 25 words',
     '- Exactly 4 options per question',
     '- correct_answer must exactly match one option string',
     `- Questions must be relevant to ${subject}`,
@@ -142,6 +143,10 @@ export default async function handler(req, res) {
         generationConfig: {
           temperature: 0.7,
           responseMimeType: 'application/json',
+          maxOutputTokens: 8192,
+          thinkingConfig: {
+            thinkingBudget: 0,
+          },
         },
       }),
     });
