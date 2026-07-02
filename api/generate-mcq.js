@@ -14,12 +14,12 @@ function stripMarkdownFences(text) {
 
   let cleaned = text.trim();
 
-  const fenced = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  if (fenced) {
-    cleaned = fenced[1].trim();
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*/i, '');
+    cleaned = cleaned.replace(/```\s*$/, '');
   }
 
-  return cleaned;
+  return cleaned.trim();
 }
 
 function parseMcqJson(text) {
@@ -176,7 +176,7 @@ export default async function handler(req, res) {
         debugParsedMcqs: mcqs,
       });
     }
-    
+
     return res.status(200).json({
       success: true,
       mcqs,
