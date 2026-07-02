@@ -172,9 +172,11 @@ export default async function handler(req, res) {
       return res.status(502).json({
         success: false,
         error: 'Gemini returned invalid or empty MCQ JSON.',
+        debugRawText: responseText.slice(0, 1000),
+        debugParsedMcqs: mcqs,
       });
     }
-
+    
     return res.status(200).json({
       success: true,
       mcqs,
