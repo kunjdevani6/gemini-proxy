@@ -50,17 +50,39 @@ function parseMcqJson(text) {
 function buildPrompt(subject, level, count) {
   const levelLabel = String(level).charAt(0).toUpperCase() + String(level).slice(1).toLowerCase();
 
+  const levelGuidance = {
+    easy: [
+      'EASY level: test foundational concepts, definitions, and core terminology.',
+      'Questions should be straightforward but still appropriate for BCA undergraduates — not primary-school level.',
+    ],
+    medium: [
+      'MEDIUM level: test applied understanding across multiple related concepts.',
+      'Include scenario-based or "what happens when" questions that require connecting ideas.',
+    ],
+    hard: [
+      'HARD level: test advanced reasoning, edge cases, trade-offs, and deeper analysis.',
+      'Questions should challenge strong students without being obscure or outside the syllabus scope.',
+    ],
+  };
+
+  const guidance = levelGuidance[level] || levelGuidance.medium;
+
   return [
-    `Generate exactly ${count} unique multiple-choice questions for the academic subject "${subject}" at ${levelLabel} difficulty.`,
+    `Generate exactly ${count} unique multiple-choice questions for BCA (Bachelor of Computer Applications) undergraduate students studying "${subject}".`,
+    `Difficulty level: ${levelLabel}.`,
+    ...guidance,
     'Return ONLY a valid JSON array. No markdown, no commentary, no code fences.',
     'Each item must use this exact shape:',
     '{"question":"...","options":["A","B","C","D"],"correct_answer":"exact text of one option","explanation":"short reason"}',
     'Rules:',
+    '- Audience is college-level BCA students (ages 18-22), NOT children',
+    '- NEVER ask trivial arithmetic such as "what is 5+3" or basic counting',
+    '- Questions must be genuinely distinct from other difficulty levels (Easy ≠ Medium ≠ Hard)',
     '- Keep each explanation under 25 words',
     '- Exactly 4 options per question',
     '- correct_answer must exactly match one option string',
     `- Questions must be relevant to ${subject}`,
-    `- Difficulty must be ${levelLabel}`,
+    `- Difficulty must reflect ${levelLabel} guidance above`,
     '- Do not repeat questions',
   ].join('\n');
 }
@@ -118,10 +140,10 @@ export default async function handler(req, res) {
       });
     }
 
-    if (!level) {
+    if (!['easy', 'medium', 'hard'].includes(level)) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required field: level',
+        error: 'Missing or invalid field: level (must be easy, medium, or hard)',
       });
     }
 
@@ -144,9 +166,6 @@ export default async function handler(req, res) {
           temperature: 0.7,
           responseMimeType: 'application/json',
           maxOutputTokens: 8192,
-          thinkingConfig: {
-            thinkingBudget: 0,
-          },
         },
       }),
     });
@@ -177,8 +196,6 @@ export default async function handler(req, res) {
       return res.status(502).json({
         success: false,
         error: 'Gemini returned invalid or empty MCQ JSON.',
-        debugRawText: responseText.slice(0, 1000),
-        debugParsedMcqs: mcqs,
       });
     }
 
